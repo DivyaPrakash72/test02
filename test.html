@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text-to-Speech Application</title>
+    <style>
+        /* Add your CSS styles here */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #d7d7d7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px 50px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            padding: 70px;
+            max-width: 400px;
+        }
+
+        h1 {
+            color: #000000;
+            font-size: 24px;
+        }
+
+        #input-text {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #957bd1;
+            border-radius: 5px;
+            resize: none;
+            font-size: 16px;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        select, button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        select {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        button[disabled] {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        audio {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Text-to-Speech</h1>
+        <textarea id="input-text" placeholder="Enter the text you want to convert to speech..."></textarea>
+        <label for="voice-select">Select a Voice:</label>
+        <select id="voice-select">
+            <option value="en-US">English</option>
+            <option value="hi-IN">Hindi</option>
+        </select>
+        <button id="convert-button">Convert to Speech</button>
+        <button id="download-button" disabled>Download Audio</button>
+    </div>
+    <audio id="audio" controls></audio>
+    <script>
+       document.addEventListener("DOMContentLoaded", function () {
+            const inputText = document.getElementById("input-text");
+            const convertButton = document.getElementById("convert-button");
+            const downloadButton = document.getElementById("download-button");
+            const voiceSelect = document.getElementById("voice-select");
+            const synth = window.speechSynthesis;
+
+            let audioBlob = null;
+
+            // Function to set the voice according to the selected option
+            function setVoice() {
+                const selectedVoice = voiceSelect.value;
+                const voices = synth.getVoices();
+                const voice = voices.find(v => v.lang === selectedVoice);
+                return voice;
+            }
+
+            convertButton.addEventListener("click", function () {
+                const text = inputText.value;
+                if (text) {
+                    const voice = setVoice();
+                    if (voice) {
+                        const utterance = new SpeechSynthesisUtterance(text);
+                        utterance.voice = voice;
+                        synth.speak(utterance);
+                        utterance.onend = function () {
+                            audioBlob = new Blob([new Uint8Array(utterance.audioBuffer)], {
+                                type: "audio/mpeg"
+                            });
+                            downloadButton.removeAttribute("disabled");
+                        };
+                    } else {
+                        alert("Voice not available for the selected language.");
+                    }
+                }
+            });
+
+            downloadButton.addEventListener("click", function () {
+                if (audioBlob) {
+                    const url = window.URL.createObjectURL(audioBlob);
+                    const a = document.createElement("a");
+                    a.style.display = "none";
+                    a.href = url;
+                    a.download = "speech.mp3";
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                }
+            });
+            // Ensure the voice list is available before populating the select box
+
+        });
+    </script>
+</body>
+</html>
